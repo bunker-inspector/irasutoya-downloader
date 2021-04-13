@@ -21,44 +21,12 @@
     (catch Exception e
       (log/warnf "Could not write file at URI %s, Error: %s" uri e))))
 
-(defn- is-some-bullshit? [image-name]
-  (or (str/starts-with? image-name "twitter")
-      (str/starts-with? image-name "line_")
-      (str/includes? image-name "searchbtn")
-      (str/includes? image-name "sidebar")
-      (str/includes? image-name "button")
-      (str/includes? image-name "navigation")))
-
-(defn- is-character? [image-name]
-  (or (str/starts-with? image-name "alphabet_")
-      (str/starts-with? image-name "capital_")
-      (str/starts-with? image-name "lower_")
-      (str/starts-with? image-name "hiragana_")
-      (str/starts-with? image-name "katakana_")
-      (str/starts-with? image-name "number_")
-      (str/starts-with? image-name "hoka_")
-      (str/starts-with? image-name "hoka2_")
-      (str/starts-with? image-name "roman_number")
-      (str/starts-with? image-name "number_kanji")
-      (str/starts-with? image-name "paint_lower_")
-      (str/starts-with? image-name "paint_capital_")
-      (str/starts-with? image-name "paint_hiragana")
-      (str/starts-with? image-name "paint_katakana")
-      (str/starts-with? image-name "paint_number_")
-      (str/starts-with? image-name "paint_hoka")))
-
 (defn process-image [{categories :category
-                      {url :url} :media$thumbnail
-                      :as entry}]
+                      {url :url} :media$thumbnail}]
   (let [image-name (-> url uri/uri :path (str/split #"/") last)
-        image-folder (cond
-                       (str/includes? image-name "banner") "banners"
-                       (str/includes? image-name "icon") "icons"
-                       (str/includes? image-name "logo") "logos"
-                       (str/includes? image-name "thumbnail") "thumbnails"
-                       (is-character? image-name) "characters"
-                       (is-some-bullshit? image-name) "bs"
-                       :else "main")
+        image-folder (if (str/starts-with? image-name "thumbnail")
+                       "thumbnails"
+                       "main")
         image-path (str "output/" image-folder "/" image-name)]
     (log/infof "Found tags for filename %s: %s"
                image-path
@@ -96,27 +64,16 @@
       :$t
       Integer/parseInt))
 
-(defn- is-image? [uri]
-  (let [uri (str/lower-case uri)]
-    (or
-     (str/ends-with? uri ".png")
-     (str/ends-with? uri ".jpeg")
-     (str/ends-with? uri ".jpg"))))
-
 (def +page-size+ 24)
 
 (defn -main []
   (.mkdir (java.io.File. "output"))
-  (.mkdir (java.io.File. "output/banners"))
-  (.mkdir (java.io.File. "output/icons"))
-  (.mkdir (java.io.File. "output/logos"))
-  (.mkdir (java.io.File. "output/characters"))
   (.mkdir (java.io.File. "output/thumbnails"))
-  (.mkdir (java.io.File. "output/bs"))
   (.mkdir (java.io.File. "output/main"))
 
   (let [total (get-total)]
     (loop [offset 1]
+      (log/infof "%d processed." (dec offset))
      (->> (fetch offset +page-size+)
           entries
           (map (fn [s] (update-in s
