@@ -31,7 +31,8 @@
     (log/infof "Found tags for filename %s: %s"
                image-path
                (str/join "," (map :term categories)))
-    (when-not (.exists (java.io.File. image-path))
+    (if (.exists (java.io.File. image-path))
+      (log/infof "File %s arleady exists. Skipping." image-path)
       (copy-uri-to-file! url image-path))))
 
 (defn entries
@@ -71,15 +72,17 @@
   (.mkdir (java.io.File. "output/thumbnails"))
   (.mkdir (java.io.File. "output/main"))
 
-  (let [total (get-total)]
-    (loop [offset 1]
-      (log/infof "%d processed." (dec offset))
-     (->> (fetch offset +page-size+)
-          entries
-          (map (fn [s] (update-in s
-                                  [:media$thumbnail :url]
-                                  #(str/replace % "s72-c" "s400"))))
-          (map process-image)
-          doall)
-     (when (< offset total)
-       (recur (+ offset +page-size+))))))
+  (let [pages (/ (get-total) +page-size+)]
+    (->> pages
+         range
+         (map (partial * +page-size+))
+         (map inc)
+         (pmap (fn [offset]
+                 (->> (fetch offset +page-size+)
+                      entries
+                      (map (fn [s] (update-in s
+                                              [:media$thumbnail :url]
+                                              #(str/replace % "s72-c" "s400"))))
+                      (map process-image)
+                      dorun)))
+         dorun)))
