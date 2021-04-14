@@ -1,4 +1,5 @@
 (ns irasutoya.core
+  (:gen-class)
   (:require
    [clj-http.client :as http]
    [clojure.data.json :as json]
@@ -73,16 +74,16 @@
   (.mkdir (java.io.File. "output/main"))
 
   (let [pages (/ (get-total) +page-size+)]
-    (->> pages
-         range
-         (map (partial * +page-size+))
-         (map inc)
-         (pmap (fn [offset]
-                 (->> (fetch offset +page-size+)
-                      entries
-                      (map (fn [s] (update-in s
-                                              [:media$thumbnail :url]
-                                              #(str/replace % "s72-c" "s400"))))
-                      (map process-image)
-                      dorun)))
-         dorun)))
+    (some->> pages
+             range
+             (map (partial * +page-size+))
+             (map inc)
+             (pmap (fn [offset]
+                     (->> (fetch offset +page-size+)
+                          entries
+                          (map (fn [s] (update-in s
+                                                  [:media$thumbnail :url]
+                                                  #(str/replace % "s72-c" "s400"))))
+                          (map process-image)
+                          dorun)))
+             dorun)))
