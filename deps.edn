@@ -5,8 +5,24 @@
   lambdaisland/uri {:mvn/version "1.4.54"}
   org.clojure/data.json {:mvn/version "2.0.2"}
   org.clojure/clojure {:mvn/version "1.10.3"}
-  uberdeps/uberdeps {:mvn/version "1.0.4"}}
- :aliases {  :uberjar {:replace-deps {uberdeps/uberdeps {:mvn/version "1.0.4"}}
-            :replace-paths []
-            :main-opts ["-m" "uberdeps.uberjar"]}}
- }
+  uberdeps/uberdeps {:mvn/version "1.0.4"}
+  org.slf4j/slf4j-api {:mvn/version "1.7.30"}
+  org.slf4j/slf4j-simple {:mvn/version "1.7.30"}
+  com.github.seancorfield/next.jdbc {:mvn/version "1.2.674"}
+  com.github.seancorfield/honeysql {:mvn/version "2.0.0-rc5"}
+  ragtime/ragtime {:mvn/version "0.8.1"}
+  org.clojure/java.jdbc {:mvn/version "0.7.12"}
+  org.xerial/sqlite-jdbc {:mvn/version "3.36.0"}
+  inflections/inflections {:mvn/version "0.13.2"}}
+ :aliases {:uberjar {:replace-deps {uberdeps/uberdeps {:mvn/version "1.0.4"}}
+                     :replace-paths []
+                     :main-opts ["-m" "uberdeps.uberjar"]}
+           :native-image {:main-opts ["-m" "clj.native-image" "irasutoya.core"
+                                      "--initialize-at-build-time"
+                                      ;; optional native image name override
+                                      "-H:Name=irasutoya"]
+                          :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
+                          :extra-deps
+                          {clj.native-image/clj.native-image
+                           {:git/url "https://github.com/taylorwood/clj.native-image.git"
+                            :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}}}

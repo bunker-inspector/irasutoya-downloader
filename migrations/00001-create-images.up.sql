@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS images (
+  id INT PRIMARY KEY,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  url TEXT NOT NULL,
+  image_name TEXT NOT NULL,
+  local_path TEXT NOT NULL
+) WITHOUT ROWID;
