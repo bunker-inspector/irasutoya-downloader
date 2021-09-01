@@ -1,5 +1,6 @@
 .cpcache/
 .nrepl-port
-output
+output*
 classes
 target
+irasutoya.db
