@@ -19,7 +19,7 @@
   (try
     (with-open [in (io/input-stream uri)
                 out (io/output-stream file)]
-      #_(log/infof "[WRITE] -> %s" file)
+      (log/infof "[WRITE] -> %s" file)
       (io/copy in out))
     (catch Exception e
       (log/warnf "Could not write file at URI %s, Error: %s" uri e))))
@@ -35,11 +35,11 @@
 
 (defn- get-full-size-image-from-thumbnail
   [entry]
-  (-> entry :media$thumbnail :url (str/replace "s72-c" "s400")))
+  (some-> entry :media$thumbnail :url (str/replace "s72-c" "s400")))
 
 (defn- get-image-name
-  [entry]
-  (-> entry :media$thumbnail :url uri/uri :path (str/split #"/") last))
+  [url]
+  (-> url uri/uri :path (str/split #"/") last))
 
 (defn- determine-output-dir
   [entry]
@@ -71,18 +71,17 @@
 
 (defn- extract-interesting-information
   [entry]
-  {:title (-> entry :title :$t)
-   :author (->> entry :author first :name :$t)
-   :summary (-> entry :summary :$t str/trim)
-   :url (get-full-size-image-from-thumbnail entry)
-   :image-name (get-image-name entry)
-   :local-path (str "output/" (determine-output-dir entry) "/" (get-image-name entry))
-   :tags (->> entry :category (map :term))})
+  (when-let [url (get-full-size-image-from-thumbnail entry)]
+    (let [image-name (get-image-name url)]
+     {:title (some-> entry :title :$t)
+      :author (some->> entry :author first :name :$t)
+      :summary (some-> entry :summary :$t str/trim)
+      :url url
+      :image-name image-name
+      :local-path (str "output/" (determine-output-dir entry) "/" image-name)
+      :tags (some->> entry :category (map :term))})))
 
 (defn- page->offset [page page-size] (inc (* page page-size)))
-
-(defn- downloadable [{url :url}]
-  (some? url))
 
 (defn- get-page
   ([page]
@@ -92,7 +91,7 @@
      (->> (fetch offset page-size)
           get-entries
           (map extract-interesting-information)
-          (filter downloadable)
+          (filter some?)
           (map-indexed (fn [idx formatted]
                          (assoc formatted
                                 :id (+ offset idx))))))))
