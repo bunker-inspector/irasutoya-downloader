@@ -7,7 +7,8 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [lambdaisland.uri :as uri]
-   [irasutoya.db :as db]))
+   [irasutoya.db :as db])
+  (:import org.slf4j.impl.StaticLoggerBinder))
 
 (def ^:private +default-endpt+ "/feeds/posts/default")
 (def ^:private +irasutoya-url+ "https://www.irasutoya.com")
@@ -42,8 +43,8 @@
   (-> url uri/uri :path (str/split #"/") last))
 
 (defn- determine-output-dir
-  [entry]
-  (if (str/starts-with? (get-image-name entry) "thumbnail")
+  [image-name]
+  (if (str/starts-with? image-name "thumbnail")
     "thumbnails"
     "main"))
 
@@ -78,7 +79,7 @@
       :summary (some-> entry :summary :$t str/trim)
       :url url
       :image-name image-name
-      :local-path (str "output/" (determine-output-dir entry) "/" image-name)
+      :local-path (str "output/" (determine-output-dir image-name) "/" image-name)
       :tags (some->> entry :category (map :term))})))
 
 (defn- page->offset [page page-size] (inc (* page page-size)))
@@ -108,15 +109,13 @@
   (.mkdir (java.io.File. "output/main")))
 
 (defn -main [& args]
-  (log/info "Creating output dirs.")
   (ensure-output-dirs)
-  (log/info "Initialzing SQLite database.")
   (db/migrate)
   (->> (get-page-count +page-size+)
        range
-       (map get-page)
+       (pmap get-page)
        (map db/insert-image-data!)
-       (map (partial map fetch-and-save-image))
+       (map (partial pmap fetch-and-save-image))
        (map count)
        (reduce +)
        (log/infof "Downloded %d images.")))
