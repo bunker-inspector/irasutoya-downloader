@@ -7,12 +7,9 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [lambdaisland.uri :as uri]
-   [irasutoya.db :as db])
-  (:import org.slf4j.impl.StaticLoggerBinder))
+   [irasutoya.db :as db]))
 
-(def ^:private +default-endpt+ "/feeds/posts/default")
 (def ^:private +irasutoya-url+ "https://www.irasutoya.com")
-(def ^:private +irasutoya-uri-comps+ (uri/uri +irasutoya-url+))
 (def ^:private +page-size+ 150)
 (def ^:private +summary-endpt+ "/feeds/posts/summary")
 
@@ -25,7 +22,7 @@
     (catch Exception e
       (log/warnf "Could not write file at URI %s, Error: %s" uri e))))
 
-(defn- fetch-and-save-image [{:keys [local-path url] :as d}]
+(defn- fetch-and-save-image [{:keys [local-path url]}]
   (if (.exists (java.io.File. local-path))
     (log/infof "File %s arleady exists. Skipping." local-path)
     (copy-uri-to-file! url local-path)))
@@ -108,7 +105,7 @@
   (.mkdir (java.io.File. "output/thumbnails"))
   (.mkdir (java.io.File. "output/main")))
 
-(defn -main [& args]
+(defn -main [& _]
   (ensure-output-dirs)
   (db/migrate)
   (->> (get-page-count +page-size+)
