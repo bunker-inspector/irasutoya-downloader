@@ -15,7 +15,7 @@
 (defn migrate []
   (repl/migrate
    {:datastore (ragtime/sql-database config)
-    :migrations (ragtime/load-directory "migrations")}))
+    :migrations (ragtime/load-resources "migrations")}))
 
 (defn- clj-ify [result]
   (some->> result

@@ -108,7 +108,9 @@
   (.mkdir (java.io.File. "output/main")))
 
 (defn -main [& args]
+  (log/info "Creating output dirs.")
   (ensure-output-dirs)
+  (log/info "Initialzing SQLite database.")
   (db/migrate)
   (->> (get-page-count +page-size+)
        range
